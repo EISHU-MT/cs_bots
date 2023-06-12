@@ -6,6 +6,15 @@
 local modpath = core.get_modpath(core.get_current_modname())
 dofile(modpath.."/core.lua")
 dofile(modpath.."/on_kill.lua")
+dofile(modpath.."/act.lua")
+dofile(modpath.."/helpers.lua")
+dofile(modpath.."/path_finder.lua")
+dofile(modpath.."/inv.lua")
+
+bots.modules = modpath.."/modules"
+
+dofile(bots.modules.."/init.lua")
+
 local meta = {}
 function meta:get_current_version(state)
 	if state == "number" then
@@ -18,3 +27,7 @@ function meta:get_total_loadedbots()
 	return #bots.bots_data
 end
 bots = setmetatable(bots, meta)
+
+if (not minetest.settings:get_bool("cs_map.mapmaking", false)) then
+	dofile(modpath.."/nodes.lua")
+end
