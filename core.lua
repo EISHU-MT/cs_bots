@@ -9,6 +9,7 @@ bots = {
 		},
 	},
 	callbacks = {},
+	storage = core.get_mod_storage(core.get_current_modname()), -- Make compatible with olders versions
 	version = "V0-WorkInProgress",
 	versionN = 0.1,
 	bots_data = {
@@ -37,6 +38,8 @@ bots = {
 			csgo.team[team].bots[bot2:get_bot_name()] = true
 			csgo.team[team].bots_count = csgo.team[team].bots_count + 1
 			
+			bot:set_armor_groups({immortal = 0, fleshy = 100})
+			
 			bots.groups[team].bots[bot2:get_bot_name()] = true
 			bots.groups[team].count = #bots.groups[team].bots
 			
@@ -59,36 +62,51 @@ bots = {
 	dead_bots = {},
 	register_deadbot = function(bot, team)
 		local bot2 = bot:get_luaentity()
-		table.insert(bots.dead_bots, {entity = bot, team = team or bot2:get_team()})
+		table.insert(bots.dead_bots, {entity = core.add_entity(bot:get_pos(), bots.bots_data[bot2:get_bot_name()].rname), team = team or bot2:get_team()})
 		local def = bot:get_properties()
-		def.is_visible = false
+		def.is_visible = true
 		def.makes_foostep_sound = false
 		def.pointable = false
 		def.show_on_minimap = false
 		bot:set_properties(def)
+		bot:set_armor_groups({immortal = 1})
+		bot:set_animation(bots.bots_animations[bot2:get_bot_name()].lay, bots.bots_animations[bot2:get_bot_name()].anispeed, 0)
+		
+		local team = bot2:get_team()
+		csgo.op[bot2:get_bot_name()] = false
+		csgo.pt[bot2:get_bot_name()] = false
+		csgo.online[bot2:get_bot_name()] = false
+		csgo.spect[bot2:get_bot_name()] = false
+		csgo.pot2[bot2:get_bot_name()] = "spectator"
+		csgo.pot[bot2:get_bot_name()] = "spectator"
+		csgo.team[team].bots[bot2:get_bot_name()] = false
+		csgo.team[team].bots_count = csgo.team[team].bots_count - 1
+		
+		bots.groups[team].bots[bot2:get_bot_name()] = false
+		bots.groups[team].count = #bots.groups[team].bots
 	end,
 	respawn_bots = function()
-		if not maps.current_map.enable_bots then
-			bots.log("warning", "Map "..maps.current_map.name.." inst available for bots!")
-		--	return
-		end
 		for _, bot in pairs(bots.dead_bots) do
 			if type(bot) == "table" and type(bot.entity) == "userdata" and csgo.is_team(bot.team) then
-				if csgo.max_bots ~= csgo.teams[bot.team].bots_count then
+				if csgo.max_bots ~= csgo.team[bot.team].bots_count then
 					bots.register_toteam_bot(bot.entity)
+					local def = bot.entity:get_properties()
+					def.is_visible = true
+					def.makes_foostep_sound = true
+					def.pointable = true
+					def.show_on_minimap = true
+					bot.entity:set_properties(def)
+					bot.entity:set_animation(bots.bots_animations[bot.entity:get_luaentity():get_bot_name()].stand, bots.bots_animations[bot.entity:get_luaentity():get_bot_name()].anispeed, 0)
 				end
 			end
+			bots.dead_bots[_] = nil
 		end
 	end,
 	reset_bots = function()
-		if not maps.current_map.enable_bots then
-			bots.log("warning", "Map "..maps.current_map.name.." inst available for bots!")
-		--	return
-		end
 		bots.respawn_bots()
 		for name, tabled in pairs(bots.bots_data) do
-			if name and tabled then
-				if vector.distance(maps.current_map.teams[tabled.team], tabled.usrdata:get_pos()) > 2 then
+			if name and tabled and not name:find("__") then
+				if tabled.usrdata:get_pos() and vector.distance(maps.current_map.teams[tabled.team], tabled.usrdata:get_pos()) > 2 then
 					tabled.usrdata:set_pos(maps.current_map.teams[tabled.team])
 					tabled.usrdata:set_hp(tabled.entity:get_bot_maxhp())
 				end
@@ -96,9 +114,9 @@ bots = {
 		end
 	end,
 	start_engine = function()
-		if not maps.current_map.enable_bots then
-			bots.log("warning", "Map "..maps.current_map.name.." inst available for bots!")
-		--	return
+		if bots.enable ~= true then
+			bots.log("error", "Bots engine is disabled")
+			return
 		end
 		for name, contents in pairs(bots.bots_data) do
 			if name:find("__") then -- Test purposes
@@ -118,9 +136,9 @@ bots = {
 		return {x = pos.x, y = pos.z}
 	end,
 	mve = {},
-	do_act_bot = function() end,
+	--do_act_bot = function() end,
 	do_gravity = function(entity, dtime, gravity, ended)
-		local inf = entity:get_properties()
+		--[[local inf = entity:get_properties()
 		if not inf then
 			return
 		end
@@ -161,7 +179,22 @@ bots = {
 					return
 				end
 			end
-		end
+		end--]]
+	end,
+	is_in_it = function(target, pos1, pos2) -- target = Target pos, pos1 = corner 1, pos2 = corner 2
+		return target.x >= pos1.x and target.x <= pos2.x and target.y >= pos1.y and target.y <= pos2.y and target.z >= pos1.z and target.z <= pos2.z
+	end,
+	return_dir = function(pos1, pos2)
+		local from = bots.to_2d(pos2)
+		local to = bots.to_2d(pos1)
+		local offset_to = {
+			x = to.x - from.x,
+			y = to.y - from.y
+		}
+		local direction = vector.direction(pos2, pos1)
+		local pitch = math.asin(direction.y) - (math.pi/2)
+		local dir = math.atan2(offset_to.y, offset_to.x) - (math.pi/2)
+		return dir, pitch
 	end,
 	physics = {
 		__example = {
@@ -171,7 +204,24 @@ bots = {
 			jump = 1
 		},
 	},
-	end_velocity_y = tonumber(minetest.settings:get("cs_core.end_velocity_y", "0") or 0)
+	end_velocity_y = tonumber(minetest.settings:get("cs_core.end_velocity_y", "0") or 0),
+	default_gun_velocity = tonumber(minetest.settings:get("cs_core.default_gun_velocity", "30") or 30),
+	default_gravity = tonumber(minetest.settings:get("cs_core.bots_gravity", "9.81") or 9.81),
+	default_bullet_damage = tonumber(minetest.settings:get("cs_core.default_bullet_damage", "10") or 10),
+	max_view_range = tonumber(minetest.settings:get("cs_core.view_range", "50") or 50),
+	enable = minetest.settings:get("cs_core.enable_bots", false) and minetest.settings:get_bool("cs_map.mapmaking", false) ~= true,
+	queue_to_say = {},
+	calc_dir = function(rotation)
+		-- Calculate the look direction based on the rotation
+		local yaw = rotation.y
+		local pitch = rotation.x
+		-- Calculate the components of the look direction vector
+		local directionX = -math.sin(yaw) * math.cos(pitch)
+		local directionY = math.sin(pitch)
+		local directionZ = math.cos(yaw) * math.cos(pitch)
+		-- Return the look direction as a vector
+		return {x = directionX, y = directionY, z = directionZ}
+	end
 }
 
 local metatable_registering = {}
@@ -204,7 +254,7 @@ function metatable_registering:apply_physics(physics)
 	end
 end
 function metatable_registering:get_bot_data()
-	return self.object:get_properties().bot_data
+	return self.bot_data
 end
 function metatable_registering:get_bot_maxhp()
 	return self.object:get_properties().hp_max
@@ -235,12 +285,12 @@ function bots.register_bot(name, def, animation)
 	local mdef = {
 		initial_properties = {
 			bot_name = def.bot_name, -- Karl, Crusher, etc
-			rifles = def.rifles, -- {"192" = "rangedweapons:ak47"}
+			rifles = def.rifles,
 			name = def.bot_name,
 			hp_max = def.hp,
 			team = team,
 			--eye_height = 1.625,
-			physical = false,
+			physical = true,
 			collide_with_objects = true,
 			collisionbox = def.collisionbox,
 			selectionbox = def.collisionbox,
@@ -262,7 +312,7 @@ function bots.register_bot(name, def, animation)
 			nametag = "",
 			infotext = "BOT "..def.bot_name,
 			static_save = true,
-			damage_texture_modifier = "",
+			damage_texture_modifier = "^[brighten",
 			shaded = true,
 			show_on_minimap = true,
 			dtimer1 = 0,
@@ -271,14 +321,14 @@ function bots.register_bot(name, def, animation)
 		},
 		
 		on_step = function(self, dtime)
-			bots.do_act_bot(self.bot_name, self.team, self, dtime)
+			bots.do_act_bot(self, dtime)
 		end,
 		on_rightclick = function(self, clicker)
 			local player = Player(clicker)
 			local name = Name(clicker)
 			local entity = self.object:get_luaentity()
 			local team = self.team
-			print(dump(self))
+			--print(dump(self))
 			if csgo.check_team(name) ~= "terrorist" and csgo.check_team(name) ~= "counter" then
 				return -- Engine must dont make obj rotate, like an spectator rightclicking a bot
 			end
@@ -305,11 +355,13 @@ function bots.register_bot(name, def, animation)
 				local team = self.team
 				if player_team ~= "spectator" then
 					
-					bots.on_kill(self.object, player, damage, self, "bot")
+					
+					
+					local lay = bots.on_kill(self.object, player, damage, self, "bot")
 					
 				end
 				
-				core.log("error", "---")
+				--core.log("error", "---")
 				
 				--return false
 				
@@ -318,21 +370,49 @@ function bots.register_bot(name, def, animation)
 			--end
 			--return false
 		end,
-		--[[
+		
+		on_punch = function(self, puncher, _, _, _, damage)
+			local from = bots.to_2d(self.object:get_pos())
+			local to = bots.to_2d(puncher:get_pos())
+			local offset_to = {
+				x = to.x - from.x,
+				y = to.y - from.y
+			}
+			
+			local dir = math.atan2(offset_to.y, offset_to.x) - (math.pi/2)
+			self.object:set_yaw(dir)
+			
+			local pteam = csgo.check_team(puncher:get_player_name())
+			local name = puncher:get_player_name()
+			
+			if pteam ~= self.object:get_luaentity():get_team() then
+				local msg = radio.select_random_msg("hurted")
+				if (bots.queue_to_say[self.object:get_luaentity():get_bot_name()] or 0) <= 0 then
+					radio.send_msg(self.object:get_luaentity():get_team(), msg, "<BOT "..self.object:get_luaentity():get_bot_name(true).."> ")
+					bots.queue_to_say[self.object:get_luaentity():get_bot_name()] = 0.5
+				end
+				
+			end
+			
+		end,
+		
 		on_activate = function(self)
-			setmetatable(self, metatable)
-		end,--]]
+			--setmetatable(self, metatable)
+			self.object:set_velocity({x = 0, y = 0, z = 0})
+			self.object:set_acceleration({x = 0, y = -bots.physics[self.object:get_luaentity():get_bot_name()].gravity, z = 0})
+		end,
 	}
 	core.register_entity(name, setmetatable(mdef, metatable))
 	bots.bots_data["BOT_"..def.bot_name] = {
 		name = "BOT_"..def.bot_name,
-		money = "200",
+		money = 200,
 		actual_rifle = "",
 		team = team,
 		actual_pistol = "",
 		recharge = true,
 		usrdata = {},
 		rname = name,
+		eye_height = def.eye_height or 1.625
 	}
 	bots.bots_animations["BOT_"..def.bot_name] = {
 		lay = animation.lay or animation.death,
@@ -343,7 +423,7 @@ function bots.register_bot(name, def, animation)
 		anispeed = animation.speed or 30,
 	}
 	bots.physics["BOT_"..def.bot_name] = {
-		gravity = 1,
+		gravity = def.gravity or bots.default_gravity,
 		jump = 1
 	}
 	kills.add_to("BOT_"..def.bot_name, team)
@@ -352,9 +432,9 @@ end
 --Register some parts for env
 
 local function gsf(dtime)
-	for name, contents in pairs(bots.physics) do
-		if type(bots.bots_data[name].usrdata) == "userdata" then
-			bots.do_gravity(bots.bots_data[name].usrdata, dtime, contents.gravity, ended)
+	for name, value in pairs(bots.queue_to_say) do
+		if type(value) == "number" then
+			bots.queue_to_say[name] = bots.queue_to_say[name] - dtime
 		end
 	end
 end
