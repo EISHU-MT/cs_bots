@@ -27,10 +27,11 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 						
 						local random = Randomise("Select random", {"The last alive player is: "..victim, "The team "..csgo.enemy_team(csgo.pot[victim]).." had only 1 player!"})
 						
+						bots.register_deadbot(bot, csgo.pot[victim])
 						annouce.winner(t, random)
 						cs_match.finish_match(csgo.pot[pname])
 						cs_kill.run_callbacks(victim, nil, nil, csgo.pot[victim])
-						bots.respawn_bots()
+						
 						
 					elseif csgo.team[csgo.pot[victim]].total_count - 1 < 0 then
 						local t = csgo.enemy_team(csgo.pot[victim])
@@ -38,40 +39,42 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 						annouce.winner(t, random)
 						cs_match.finish_match(csgo.pot[pname])
 						cs_kill.run_callbacks(victim, nil, nil, csgo.pot[victim])
-						bots.respawn_bots()
+						bots.register_deadbot(bot, csgo.pot[victim])
+						
 					else
-						if died[victim] ~= true then 
+						--if died[victim] ~= true then 
 							if cs_match.commenced_match ~= false then
-								local a1 = player:get_wielded_item() ~= "" and player:get_wielded_item() or ItemStack(bots.bots_data[bot:get_bot_name()].actual_rifle)
+								local a1 = player:get_wielded_item() ~= "" and player:get_wielded_item() or ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_item)
 								local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 								cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 								
 								cs_kill.run_callbacks(victim, nil, nil, csgo.pot[victim])
 								
+								
 								bots.register_deadbot(bot, csgo.pot[victim])
 								
 								csgo.blank(victim, csgo.pot[victim])
 							end
-						end
+						--end
 					end
 					return
 				else
-					if csgo.team[csgo.pot[victim]].count - 1 == 0 and csgo.team[csgo.pot[pname]].count == 1 then
+					if csgo.team[csgo.pot[victim]].total_count - 1 <= 0 and csgo.team[csgo.pot[pname]].count == 1 then
 						local random = Randomise("Select random", {"The last alive player is: "..pname, "the team "..csgo.pot[pname].." had only 1 player!", "wajaaaa"})
 						annouce.winner(csgo.pot[pname], random)
 						cs_match.finish_match(csgo.pot[pname])
 						cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
-						bots.respawn_bots()
-					elseif csgo.team[csgo.pot[victim]].count - 1 == 0 and victim and csgo.pot[pname] then
+						bots.register_deadbot(bot, csgo.pot[victim])
+					elseif csgo.team[csgo.pot[victim]].total_count - 1 <= 0 and victim and csgo.pot[pname] then
 						local random = Randomise("Select random", {"The last killed player is: "..victim, "the team "..csgo.pot[pname].." did his job", "wajaaa"})
 						annouce.winner(csgo.pot[pname], random)
 						cs_match.finish_match(csgo.pot[pname])
 						cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
-						bots.respawn_bots()
+						bots.register_deadbot(bot, csgo.pot[victim])
 					else
-						if died[victim] ~= true then 
+						--if died[victim] ~= true then 
 							if cs_match.commenced_match ~= false then
-								local a1 = ItemStack(bots.bots_data[bot:get_bot_name()].actual_rifle)
+								local a1 = ItemStack(bots.bots_data[bot:get_bot_name()].actual_item)
 								local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 								cs_kh.add(reason.object:get_player_name(), player:get_player_name(), image, "", csgo.pot[victim])
 								
@@ -81,7 +84,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 								
 								csgo.blank(victim, csgo.pot[victim])
 							end
-						end
+						--end
 					end
 				end
 				
@@ -155,7 +158,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					annouce.winner(t, random)
 					cs_match.finish_match(csgo.pot[pname])
 					cs_kill.run_callbacks(victim, nil, nil, csgo.pot[victim])
-					bots.respawn_bots()
+					--bots.respawn_bots()
 					
 				elseif csgo.team[csgo.pot[victim]].total_count - 1 <= 0 then
 					local t = csgo.enemy_team(csgo.pot[victim])
@@ -163,11 +166,11 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					annouce.winner(t, random)
 					cs_match.finish_match(csgo.pot[pname])
 					cs_kill.run_callbacks(victim, nil, nil, csgo.pot[victim])
-					bots.respawn_bots()
+					--bots.respawn_bots()
 				else
 					if died[victim] ~= true then 
 						if cs_match.commenced_match ~= false then
-							local a1 = ItemStack(bots.bots_data[bot:get_bot_name()].actual_rifle)
+							local a1 = ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_rifle)
 							local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 							cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 							
@@ -175,6 +178,8 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 							
 							ccore[victim] = csgo.pot2[victim]
 							--bots.register_deadbot(bot, csgo.pot[victim])
+							
+							bank.player_add_value(pname, 60)
 							
 							csgo.blank(victim, csgo.pot[victim])
 							
@@ -190,26 +195,29 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					annouce.winner(csgo.pot[pname], random)
 					cs_match.finish_match(csgo.pot[pname])
 					cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
-					bots.respawn_bots()
+					--bots.respawn_bots()
 				elseif csgo.team[csgo.pot[victim]].count - 1 == 0 and victim and csgo.pot[pname] then
 					local random = Randomise("Select random", {"The last killed player is: "..victim, "the team "..csgo.pot[pname].." did his job", "wajaaa"})
 					annouce.winner(csgo.pot[pname], random)
 					cs_match.finish_match(csgo.pot[pname])
 					cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
-					bots.respawn_bots()
+					--bots.respawn_bots()
 				else
 					if died[victim] ~= true then 
 						if cs_match.commenced_match ~= false then
-							local a1 = ItemStack(bots.bots_data[bot:get_bot_name()].actual_rifle)
+							local a1 = ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_rifle)
 							local image = a1:get_definition().inventory_image or "cs_files_hand.png"
-							cs_kh.add(reason.object:get_player_name(), player:get_player_name(), image, "", csgo.pot[victim])
+							cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 							
 							cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
 							
+							bank.player_add_value(pname, 60)
+							
 							ccore[victim] = csgo.pot2[victim]
-							--bots.register_deadbot(bot, csgo.pot[victim])
 							
 							csgo.blank(victim, csgo.pot[victim])
+							csgo.spectator(victim)
+							csgo.send_message(victim .. " will be a spectator. because he died. ", "spectator")
 						end
 					end
 				end
