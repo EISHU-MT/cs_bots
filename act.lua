@@ -29,37 +29,54 @@ function bots.do_act_bot(properties, dtime)
 				if core.line_of_sight(to_pos, to_pos2) and (csgo.check_team(obj:get_player_name()) ~= "" or checked_thing) then
 					local obj_team = csgo.check_team(obj:get_player_name()) ~= "" and csgo.check_team(obj:get_player_name()) or csgo.check_team(obj:get_luaentity():get_bot_name()) ~= "" and csgo.check_team(obj:get_luaentity():get_bot_name())
 					
-					--print(obj_team)
+					--print(obj_team, name, entity:get_team())
 					
 					if obj:get_properties().infotext ~= object:get_properties().infotext then -- Avoid if the object is the used object
 						
-						if obj_team == entity:get_team() then
-							return
-						end
-						
-						
-						
-						local yaw, pitch = bots.return_dir(obj:get_pos(), object:get_pos())
-						
-						object:set_yaw(yaw)
-						
-						if not bots.queue_shot[name] then
-							local itemstack = ItemStack((bots.bots_data[name].actual_rifle ~= "" and bots.bots_data[name].actual_rifle) or (bots.bots_data[name].actual_pistol ~= "" and bots.bots_data[name].actual_pistol))
-							if itemstack and itemstack ~= "" then
-								bots.bots_data[name].actual_item = itemstack:get_name()
-								local damage = itemstack:get_definition().RW_gun_capabilities.gun_damage -- can be changed.
-								local sound = itemstack:get_definition().RW_gun_capabilities.gun_sound
-								local velocity = itemstack:get_definition().RW_gun_capabilities.gun_velocity or bots.default_gun_velocity
-								bots.launch_projectile(1, damage or bots.default_bullet_damage, "bots:bullet", sound, velocity, properties, obj:get_pos())
-								bots.queue_shot[name] = 0.1
-							else
-								return
+						if obj_team ~= "spectator" then
+							if obj_team ~= entity:get_team() then
+								
+								
+								
+								local yaw, pitch = bots.return_dir(obj:get_pos(), object:get_pos())
+								
+								object:set_yaw(yaw)
+								
+								if not bots.queue_shot[name] then
+									bots.bots_data[name].usrdata:set_animation(bots.bots_animations[name].mine, bots.bots_animations[name].anispeed, 0)
+									local itemstack = ItemStack((bots.bots_data[name].actual_rifle ~= "" and bots.bots_data[name].actual_rifle) or (bots.bots_data[name].actual_pistol ~= "" and bots.bots_data[name].actual_pistol))
+									if itemstack and itemstack ~= "" then
+										bots.bots_data[name].actual_item = itemstack:get_name()
+										local damage = itemstack:get_definition().RW_gun_capabilities.gun_damage -- can be changed.
+										local sound = itemstack:get_definition().RW_gun_capabilities.gun_sound
+										local velocity = itemstack:get_definition().RW_gun_capabilities.gun_velocity or bots.default_gun_velocity
+										bots.launch_projectile(1, damage or bots.default_bullet_damage, "bots:bullet", sound, velocity, properties, obj:get_pos())
+										bots.queue_shot[name] = 0.1
+										bots.witem[name]:set_properties({
+											textures = {itemstack:get_name()},
+											visual_size = bots.location[4],
+										})
+										
+									else
+										print()
+									end
+								end
 							end
 						end
 					end
 				end
 			end
 		end
+		-- Move forms
+		--[[
+			Every corner in the map is a sign that the bot needed to move to the other AXIS. (bots:marker_corner)
+			Bots might use bots.return_dir(p1, p2) to make bot look at the corner.
+		--]]
+	--[[
+		Using Mobkit API for movements.
+		By Termos
+	--]]
+	--mobkit.stepfunc(properties, dtime) -- Link to this, for movements
 	end
 end
 bots.timer = 0
@@ -73,6 +90,7 @@ local step = function(dtime)
 				bots.queue_shot[name] = bots.queue_shot[name] - dtime
 			else
 				bots.queue_shot[name] = nil
+				bots.bots_data[name].usrdata:set_animation(bots.bots_animations[name].stand, bots.bots_animations[name].anispeed, 0)
 			end
 		end
 		bots.timer = 0

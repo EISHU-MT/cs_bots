@@ -12,21 +12,66 @@ bots = {
 	storage = core.get_mod_storage(core.get_current_modname()), -- Make compatible with olders versions
 	version = "V0-WorkInProgress",
 	versionN = 0.1,
-	bots_data = {
-		__example = {
-			actual_rifle = "rangedweapons:ak47",
-			name = "BOT_Crusher",
-			money = "456",
-			team = "counter",
-			actual_pistol = "rangedweapons:luger",
-			recharge = true,
-			actual_weapon_image = "", -- TODO: Must use ItemStack(weapon):get_definition().inventory_image
-			usrdata = {}, -- Object
-		},
+	location = { -- Wield item for bots
+		"Arm_Right",
+		{x=0, y=5.5, z=3},
+		{x=-90, y=225, z=90},
+		{x=0.25, y=0.25},
 	},
+	bots_data = {
+	},
+	dead_ent = {
+		hp_max = 100,
+		--eye_height = 1.625,
+		physical = true,
+		collide_with_objects = true,
+		collisionbox = { -0.5, -0.5, -0.5, 0.5, 0.5, 0.5 },  -- default
+		selectionbox = { -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, rotate = false },
+		pointable = false,
+		visual = "mesh",
+		visual_size = {x = 1, y = 1, z = 1},
+		mesh = "empty.b3d",
+		textures = {},
+		colors = {},
+		use_texture_alpha = false,
+		spritediv = {x = 1, y = 1},
+		initial_sprite_basepos = {x = 0, y = 0},
+		is_visible = true,
+		makes_footstep_sound = false,
+		automatic_rotate = 0,
+		stepheight = 0,
+		automatic_face_movement_dir = 0.0,
+		automatic_face_movement_max_rotation_per_sec = -1,
+		backface_culling = true,
+		glow = 1,
+		nametag = "",
+		infotext = "(DIED)",
+		static_save = true,
+		damage_texture_modifier = "",
+		shaded = true,
+		show_on_minimap = false,
+	},
+	transform = function(n) if not tostring(n):find("-") then return n end return tonumber(tostring(n):sub(2)) end,
+	difference_between_pos = function(pos1, pos2)
+		local t = bots.transform
+		local x = pos1.x - pos2.x
+		local y = pos1.y - pos2.y
+		local z = pos1.z - pos2.z
+		return {x = t(x), y = t(y), z = t(z)}
+	end,
+	equals = function(t1, t2)
+		for name, value in pairs(t1) do
+			if t2[name] and t2[name] ~= value then
+				return false
+			end
+		end
+		return true
+	end,
 	register_toteam_bot = function(bot, by_started_engine)
-			local bot22 = bot:get_luaentity()
+		local bot22 = bot:get_luaentity()
+		--print("aeaeaeaeae"..dump(bot))
 		if bot and type(bot) == "userdata" and csgo.max_bots ~= csgo.team[bot22:get_team()].bots_count and not maps.current_map.enable_bots then
+			--print(bot22:get_team().." "..bot22:get_bot_name())
 			local bot2 = bot:get_luaentity()
 			local team = bot2:get_team()
 			csgo.op[bot2:get_bot_name()] = true
@@ -42,6 +87,18 @@ bots = {
 			
 			bots.groups[team].bots[bot2:get_bot_name()] = true
 			bots.groups[team].count = #bots.groups[team].bots
+			
+			--WieldItem (Extracted from wielditem (cs_hand))
+			--print()
+			--print(dump(core.add_entity(bot:get_pos(), "bots:witem")))
+			local witem = core.add_entity(bot:get_pos(), "bots:witem")
+			witem:set_attach(bot, bots.location[1], bots.location[2], bots.location[3])
+			witem:set_properties({
+				textures = {"wield3d:hand"},
+				visual_size = bots.location[4],
+			})
+			
+			bots.witem[bot2:get_bot_name()] = witem
 			
 			if by_started_engine ~= true then
 				if team == "counter" then
@@ -62,7 +119,7 @@ bots = {
 	dead_bots = {},
 	register_deadbot = function(bot, team)
 		local bot2 = bot:get_luaentity()
-		table.insert(bots.dead_bots, {entity = core.add_entity(bot:get_pos(), bots.bots_data[bot2:get_bot_name()].rname), team = team or bot2:get_team()})
+		table.insert(bots.dead_bots, {team = team or bot2:get_team(), bot_raw_name = bot2.name})
 		local def = bot:get_properties()
 		def.is_visible = true
 		def.makes_foostep_sound = false
@@ -71,6 +128,21 @@ bots = {
 		bot:set_properties(def)
 		bot:set_armor_groups({immortal = 1})
 		bot:set_animation(bots.bots_animations[bot2:get_bot_name()].lay, bots.bots_animations[bot2:get_bot_name()].anispeed, 0)
+		
+		died_players[bot2:get_bot_name()] = minetest.add_entity(bot:get_pos(), "cs_player:dead_ent")
+		local new_table = table.copy(bots.dead_ent)
+		local tex
+		if team == "terrorist" then
+			tex = "red."..math.random(1, 2)..".png"
+		elseif team == "counter" then
+			tex = "blue.png"
+		else
+			tex = "character.png"
+		end
+		new_table.textures = {tex}
+		new_table.visual_size = {x = 1, y = 1, z = 1}
+		died_players[bot2:get_bot_name()]:set_properties(new_table)
+		died_players[bot2:get_bot_name()]:set_animation({x = 162, y = 166}, 15, 0)
 		
 		local team = bot2:get_team()
 		csgo.op[bot2:get_bot_name()] = false
@@ -87,16 +159,22 @@ bots = {
 	end,
 	respawn_bots = function()
 		for _, bot in pairs(bots.dead_bots) do
-			if type(bot) == "table" and type(bot.entity) == "userdata" and csgo.is_team(bot.team) then
+			if type(bot) == "table" and bot.bot_raw_name and csgo.is_team(bot.team) then
 				if csgo.max_bots ~= csgo.team[bot.team].bots_count then
-					bots.register_toteam_bot(bot.entity)
-					local def = bot.entity:get_properties()
+					local bott = core.add_entity(maps.current_map.teams[bot.team], bot.bot_raw_name)
+					local ent = bott:get_luaentity()
+					bots.register_toteam_bot(bott)
+					
+					bots.bots_data[ent:get_bot_name()].usrdata = bott
+					bots.bots_data[ent:get_bot_name()].entity = ent
+					
+					local def = bott:get_properties()
 					def.is_visible = true
 					def.makes_foostep_sound = true
 					def.pointable = true
 					def.show_on_minimap = true
-					bot.entity:set_properties(def)
-					bot.entity:set_animation(bots.bots_animations[bot.entity:get_luaentity():get_bot_name()].stand, bots.bots_animations[bot.entity:get_luaentity():get_bot_name()].anispeed, 0)
+					bott:set_properties(def)
+					bott:set_animation(bots.bots_animations[bott:get_luaentity():get_bot_name()].stand, bots.bots_animations[bott:get_luaentity():get_bot_name()].anispeed, 0)
 				end
 			end
 			bots.dead_bots[_] = nil
@@ -106,10 +184,29 @@ bots = {
 		bots.respawn_bots()
 		for name, tabled in pairs(bots.bots_data) do
 			if name and tabled and not name:find("__") then
-				if tabled.usrdata:get_pos() and vector.distance(maps.current_map.teams[tabled.team], tabled.usrdata:get_pos()) > 2 then
-					tabled.usrdata:set_pos(maps.current_map.teams[tabled.team])
-					tabled.usrdata:set_hp(tabled.entity:get_bot_maxhp())
+				if type(tabled.usrdata) == "userdata" then
+					tabled.usrdata:remove()
 				end
+				
+				-- Reset bot
+				
+				local bott = core.add_entity(maps.current_map.teams[tabled.team], tabled.rname)
+				
+				bott:set_pos(maps.current_map.teams[tabled.team])
+				bott:set_hp(20)
+				
+				local def = bott:get_properties()
+				def.is_visible = true
+				def.makes_foostep_sound = true
+				def.pointable = true
+				def.show_on_minimap = true
+				bott:set_properties(def)
+				bott:set_animation(bots.bots_animations[bott:get_luaentity():get_bot_name()].stand, bots.bots_animations[bott:get_luaentity():get_bot_name()].anispeed, 0)
+				
+				local ent = bott:get_luaentity()
+				bots.bots_data[ent:get_bot_name()].usrdata = bott
+				bots.bots_data[ent:get_bot_name()].entity = ent
+				
 			end
 		end
 	end,
@@ -118,18 +215,20 @@ bots = {
 			bots.log("error", "Bots engine is disabled")
 			return
 		end
+		
 		for name, contents in pairs(bots.bots_data) do
-			if name:find("__") then -- Test purposes
-				return
+			if not name:find("__") then -- Test purposes
+				--print(dump(contents))
+				local team = contents.team
+				local registered_name = contents.rname
+				local bot = core.add_entity(maps.current_map.teams[team], contents.rname)
+				bots.bots_data[name].usrdata = bot
+				local ent = bot:get_luaentity()
+				--print(bot:get_luaentity():get_bot_name(), bot:get_luaentity():get_team())
+				bots.bots_data[name].entity = bot:get_luaentity()
+				bot:set_animation(bots.bots_animations[name].stand, bots.bots_animations[name].anispeed, 0)
+				bots.register_toteam_bot(bot, true)
 			end
-			local team = contents.team
-			local registered_name = contents.rname
-			local bot = core.add_entity(maps.current_map.teams[team], contents.rname)
-			bots.bots_data[name].usrdata = bot
-			bots.bots_data[name].entity = bot:get_luaentity()
-			bot:set_physics_override({gravity=1, speed=1})
-			bot:set_animation(bots.bots_animations[name].stand, bots.bots_animations[name].anispeed, 0)
-			bots.register_toteam_bot(bot, true)
 		end
 	end,
 	to_2d = function(pos)
@@ -221,7 +320,10 @@ bots = {
 		local directionZ = math.cos(yaw) * math.cos(pitch)
 		-- Return the look direction as a vector
 		return {x = directionX, y = directionY, z = directionZ}
-	end
+	end,
+	witem = {},
+	data_of_bots = {},
+	logic = dofile(core.get_modpath(core.get_current_modname()).."/logic_proccesor.lua")
 }
 
 local metatable_registering = {}
@@ -263,20 +365,14 @@ end
 local metatable = {__index = metatable_registering}
 
 function bots.register_bot(name, def, animation)
-	local team
-	if def.group or def.team then
-		team = def.group or def.team
-	else
-		return false
-	end
+	local team = def.team
 	local metatable2 = metatable_registering
-	metatable2.team = team
-	metatable2.bot_name = def.bot_name
 	metatable2.bot_data = {
 		rifles = def.rifles,
 		pistols = def.pistols,
 		money = def.money or 200,
 		name = def.bot_name,
+		team = team,
 		recharge = def.recharge or true,
 	}
 	
@@ -284,11 +380,11 @@ function bots.register_bot(name, def, animation)
 	local meta = {__index = metatable2}
 	local mdef = {
 		initial_properties = {
-			bot_name = def.bot_name, -- Karl, Crusher, etc
-			rifles = def.rifles,
+			--bot_name = def.bot_name, -- Karl, Crusher, etc
+			--rifles = def.rifles,
 			name = def.bot_name,
 			hp_max = def.hp,
-			team = team,
+			--team = team,
 			--eye_height = 1.625,
 			physical = true,
 			collide_with_objects = true,
@@ -301,17 +397,17 @@ function bots.register_bot(name, def, animation)
 			textures = def.textures,
 			colors = {},
 			use_texture_alpha = false,
-			spritediv = {x = 1, y = 1},
+			--spritediv = {x = 1, y = 1},
 			is_visible = true,
 			makes_footstep_sound = true,
-			automatic_rotate = 0,
+			--automatic_rotate = 0,
 			stepheight = def.sh,
-			automatic_face_movement_dir = 0.0,
-			automatic_face_movement_max_rotation_per_sec = -1,
-			backface_culling = true,
+			automatic_face_movement_dir = false,
+			--automatic_face_movement_max_rotation_per_sec = -1,
+			--backface_culling = false,
 			nametag = "",
 			infotext = "BOT "..def.bot_name,
-			static_save = true,
+			static_save = false,
 			damage_texture_modifier = "^[brighten",
 			shaded = true,
 			show_on_minimap = true,
@@ -320,9 +416,14 @@ function bots.register_bot(name, def, animation)
 			
 		},
 		
-		on_step = function(self, dtime)
-			bots.do_act_bot(self, dtime)
-		end,
+		team = team,
+		name = def.bot_name,
+		rifles = def.rifles,
+		bot_name = def.bot_name,
+		
+		on_step = mobkit.stepfunc, --function(self, dtime)
+			--bots.do_act_bot(self, dtime)
+		--end,
 		on_rightclick = function(self, clicker)
 			local player = Player(clicker)
 			local name = Name(clicker)
@@ -394,13 +495,36 @@ function bots.register_bot(name, def, animation)
 				
 			end
 			
+			if not minetest.settings:get_bool("cs_core.enable_friend_shot", false) then
+				mobkit.hurt(self, damage)
+			end
+			
 		end,
 		
-		on_activate = function(self)
-			--setmetatable(self, metatable)
-			self.object:set_velocity({x = 0, y = 0, z = 0})
-			self.object:set_acceleration({x = 0, y = -bots.physics[self.object:get_luaentity():get_bot_name()].gravity, z = 0})
-		end,
+		on_activate = mobkit.actfunc, --function(self)
+		--	--setmetatable(self, metatable)
+		--	self.object:set_velocity({x = 0, y = 0, z = 0})
+		--	self.object:set_acceleration({x = 0, y = -bots.physics[self.object:get_luaentity():get_bot_name()].gravity, z = 0})
+		--end,
+		
+		-- MobKit required fields
+		
+		logic = bots.logic,
+		
+		timeout = 0,
+		buoyancy = -1,
+		max_hp = def.hp,
+		get_staticdata = mobkit.statfunc, -- MT Special
+		max_speed = 2,
+		view_range = bots.max_view_range,
+		jump_height = 1,
+		attack={range=1, damage_groups = {fleshy = 10} },
+		animation = {
+			walk = {range = animation.walk, speed = animation.speed, loop = true},
+			attack = {range = animation.mine, speed = animation.speed, loop = true},
+			stand = {range = animation.stand, speed = animation.speed, loop = true}
+		},
+		armor_groups = {fleshy = 100, immortal = 0}
 	}
 	core.register_entity(name, setmetatable(mdef, metatable))
 	bots.bots_data["BOT_"..def.bot_name] = {
@@ -414,20 +538,36 @@ function bots.register_bot(name, def, animation)
 		rname = name,
 		eye_height = def.eye_height or 1.625
 	}
+	--print(dump(bots.bots_data))
 	bots.bots_animations["BOT_"..def.bot_name] = {
 		lay = animation.lay or animation.death,
 		sit = animation.sit or animation.camp,
 		stand = animation.stand or animation.noact,
 		mine = animation.mine or animation.attack,
+		walk = animation.walk,
 		walk_mine = animation.wmine or animation.walk_attack,
 		anispeed = animation.speed or 30,
 	}
+	--print(dump(bots.bots_data))
 	bots.physics["BOT_"..def.bot_name] = {
 		gravity = def.gravity or bots.default_gravity,
 		jump = 1
 	}
+	bots.data_of_bots["BOT_"..def.bot_name] = {timer = 0}
 	kills.add_to("BOT_"..def.bot_name, team)
 end
+
+local wield_entity = {
+	initial_properties = {
+		physical = false,
+		collisionbox = {-0.125,-0.125,-0.125, 0.125,0.125,0.125},
+		visual = "wielditem",
+		textures = {"wield3d:hand"},
+		wielder = nil,
+		timer = 0,
+		static_save = false,
+	}
+}
 
 --Register some parts for env
 
@@ -441,6 +581,7 @@ end
 
 core.register_globalstep(gsf)
 
+core.register_entity(":bots:witem", wield_entity)
 
 
 

@@ -95,16 +95,12 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 			if cs_match.commenced_match ~= true then
 				return true
 			end
-			if not (player:get_hp() > 0 and player:get_hp() - damage <= 0 and csgo.pot[victim] and csgo.pot[victim] ~= "spectator") then
-				return true
-			end
 			
 			local player = bot
 			
 			if player:get_hp() > 0 and player:get_hp() - damage <= 0 and csgo.pot[victim] and csgo.pot[victim] ~= "spectator" then
-				
 				died_players[player:get_player_name()] = minetest.add_entity(player:get_pos(), "cs_player:dead_ent")
-				local new_table = table.copy(dead_ent)
+				local new_table = table.copy(bots.dead_ent)
 				local tex
 				if csgo.pot2[Name(player)] == "terrorist" then
 					tex = "red.png"
@@ -128,14 +124,16 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 						ccore[victim] = csgo.pot2[victim]
 					end
 				end
+			else
+				return -- Avoid some bugs
 			end
 			
 			local pname
 			if hitter and not hitter:get_properties().infotext:find("BOT") then -- for now
 				pname = hitter:get_player_name()
 			elseif hitter and hitter:get_properties().infotext:find("BOT") then
-				--pname = hitter:get_luaentity():get_bot_name()
-				return true
+				pname = hitter:get_luaentity():get_bot_name()
+				--return true
 			end
 			
 			local victim = bot:get_player_name()

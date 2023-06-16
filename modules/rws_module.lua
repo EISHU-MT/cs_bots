@@ -10,7 +10,7 @@ bots.launch_projectile = function(projectiles, dmg, entname, shoot_sound, combin
 	local tmpsvertical = data.object:get_rotation().x / (math.pi/2)
 	local svertical = math.asin(direction.y) - (math.pi/2)
 	if pos and dir and yaw then
-		minetest.sound_play(shoot_sound, {pos = player:get_pos(), gain = 0.5, max_hear_distance = 60})
+		minetest.sound_play(shoot_sound, {pos = pos, gain = 0.5, max_hear_distance = 60})
 		pos.y = pos.y + 1.45
 		projectiles = projectiles or 1
 		for i=1,projectiles do
