@@ -20,6 +20,7 @@ bots = {
 	},
 	bots_data = {
 	},
+	pathes = {},
 	dead_ent = {
 		hp_max = 100,
 		--eye_height = 1.625,

@@ -46,3 +46,37 @@ bots.get_closest_teammate = function(self, bool)
 		end
 	end
 end
+
+bots.get_closest_node = function(self, typeof)
+	if typeof == "door" then
+		local node = core.find_node_near(self.object:get_pos(), 10, "bots:invisible_door", false)
+		--print(dump(node)..self.bot_name)
+		if node then
+			
+			return node
+		end
+	end
+end
+
+bots.convert_pos_to_path = function(self, to_pos)
+	local path = bots.find_path_to(self.object:get_pos(), to_pos)
+	if path then
+		return path
+	else
+		return {}
+	end
+end
+local r = math.random
+bots.random_path = function(minedge, maxedge_raw)
+	local maxedge = {x = maxedge_raw.x, y = minedge.y, z = maxedge_raw.z} -- Convert
+	local X = r(minedge.x, maxedge.x)
+	local Y = minedge.y -- Dont randomize the `Y` Axis
+	local Z = r(minedge.z, maxedge.z)
+	return vector.new(X, Y, Z)
+end
+
+
+
+
+
+
