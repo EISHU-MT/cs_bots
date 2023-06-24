@@ -23,9 +23,9 @@ return function(self)
 	
 	bots.do_act_bot(self, mobkit.get_queue_priority(self) < 10 and mobkit.get_queue_priority(self) or 0.05)
 	
-	pfw.on_step(self)
-	
-	if AEIOU then
+	--pfw.on_step(self)
+	local mehg = false
+	if core == nil and mehg ~= false then
 		local player = Player("singleplayer")
 		local pos = player:get_pos()
 		pfw.insert_path(self, bots.find_path_to(self.object:get_pos(), pos))
