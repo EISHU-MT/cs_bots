@@ -21,6 +21,8 @@ dofile(modpath.."/nodes.lua")
 dofile(modpath.."/coords_core.lua")
 dofile(modpath.."/movements.lua")
 
+dofile(modpath.."/nametag.lua")
+
 local meta = {}
 function meta:get_current_version(state)
 	if state == "number" then
