@@ -48,7 +48,7 @@ bots.get_closest_teammate = function(self, bool)
 end
 
 bots.get_nearest_enemy = function(self)
-	local objs = core.get_objects_inside_radius(self.object:get_pos(), 120)
+	local objs = core.get_objects_inside_radius(self.object:get_pos(), 130)
 	local team = self:get_team()
 	local pos = self.object:get_pos()
 	local objs2 = {}
@@ -66,7 +66,7 @@ bots.get_nearest_enemy = function(self)
 			local luaentity = obj:get_luaentity()
 			if luaentity and luaentity:get_team() and (luaentity:get_team() == "terrorist" or luaentity:get_team() == "counter") then
 				if luaentity:get_team() ~= team then
-					if vector.distance(obj:get_pos(), pos) <= 50 then
+					if vector.distance(obj:get_pos(), pos) <= 60 then
 						table.insert(enemys, obj)
 					end
 				end
@@ -75,7 +75,7 @@ bots.get_nearest_enemy = function(self)
 			local eteam = csgo.check_team(Name(obj))
 			if eteam ~= "" and eteam ~= "spectator" then
 				if eteam ~= team then
-					if vector.distance(obj:get_pos(), pos) <= 50 then
+					if vector.distance(obj:get_pos(), pos) <= 60 then
 						table.insert(enemys, obj)
 					end
 				end
@@ -83,7 +83,7 @@ bots.get_nearest_enemy = function(self)
 		end
 	end
 	for i, obj in pairs(enemys) do
-		if vector.distance(obj:get_pos(), pos) <= 40 then
+		if vector.distance(obj:get_pos(), pos) <= 55 then
 			return obj
 		end
 	end
