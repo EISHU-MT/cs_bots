@@ -1,7 +1,7 @@
-return function(self)
+return function(self, d)
 	mobkit.vitals(self)
 	self.object:set_armor_groups({fleshy = 100, immortal = 0})
-	local nearest_id = mobkit.get_nearby_player(self)
+	local nearest_id = bots.get_nearest_enemy(self)--mobkit.get_nearby_player(self)
 	local nearest_player = Player(nearest_id)
 	local pos = self.object:get_pos()
 	local priority = mobkit.get_queue_priority(self)
@@ -21,7 +21,7 @@ return function(self)
 		mobkit.hq_hunt(self, mobkit.get_queue_priority(self), nearest_player)
 	end
 	
-	bots.do_act_bot(self, mobkit.get_queue_priority(self) < 10 and mobkit.get_queue_priority(self) or 0.05)
+	bots.do_act_bot(self, d or 0.1)
 	
 	--pfw.on_step(self)
 	local mehg = false
