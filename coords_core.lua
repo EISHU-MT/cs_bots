@@ -47,6 +47,48 @@ bots.get_closest_teammate = function(self, bool)
 	end
 end
 
+bots.get_nearest_enemy = function(self)
+	local objs = core.get_objects_inside_radius(self.object:get_pos(), 80)
+	local team = self:get_team()
+	local pos = self.object:get_pos()
+	local objs2 = {}
+	local nearest_enemy
+	local enemys = {}
+	for i, obj in pairs(objs) do
+		if obj:get_properties().infotext:find("BOT") then
+			table.insert(objs2, obj)
+		elseif obj:is_player() then
+			table.insert(objs2, obj)
+		end
+	end
+	for i, obj in pairs(objs2) do
+		if obj:get_properties().infotext:find("BOT") then
+			local luaentity = obj:get_luaentity()
+			if luaentity and luaentity:get_team() and (luaentity:get_team() == "terrorist" or luaentity:get_team() == "counter") then
+				if luaentity:get_team() ~= team then
+					if vector.distance(obj:get_pos(), pos) <= 30 then
+						table.insert(enemys, obj)
+					end
+				end
+			end
+		elseif obj:is_player() then
+			local eteam = csgo.check_team(Name(obj))
+			if eteam ~= "" and eteam ~= "spectator" then
+				if eteam ~= team then
+					if vector.distance(obj:get_pos(), pos) <= 30 then
+						table.insert(enemys, obj)
+					end
+				end
+			end
+		end
+	end
+	for i, obj in pairs(enemys) do
+		if vector.distance(obj:get_pos(), pos) <= 20 then
+			return obj
+		end
+	end
+end
+
 bots.get_closest_node = function(self, typeof)
 	if typeof == "door" then
 		local node = core.find_node_near(self.object:get_pos(), 10, "bots:invisible_door", false)
