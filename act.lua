@@ -1,4 +1,5 @@
 bots.wait_for_later = {}
+bots.actual_items = {}
 bots.queue_shot = {}
 function bots.do_act_bot(properties, dtime)
 	local entity = properties.object:get_luaentity()
@@ -7,8 +8,8 @@ function bots.do_act_bot(properties, dtime)
 	if cs_match.commenced_match == false and bots.wait_for_later[name] ~= true then
 		local preffered_rifle = entity:get_bot_data().rifles
 		local preffered_pistol = entity:get_bot_data().pistols
-		bots.buy_if_dont_had(bots.get_good_arm_by_money(preffered_rifle, bots.bots_data[name].money), bots.bots_data[name], "rifle")
-		bots.buy_if_dont_had(bots.get_good_arm_by_money(preffered_pistol, bots.bots_data[name].money), bots.bots_data[name], "pistol")
+		bots.buy_if_dont_had(bots.get_good_arm_by_money(preffered_rifle, bots.bots_data[name].money, name), bots.bots_data[name], "rifle")
+		bots.buy_if_dont_had(bots.get_good_arm_by_money(preffered_pistol, bots.bots_data[name].money, name), bots.bots_data[name], "pistol")
 		bots.wait_for_later[name] = true
 		return
 	end
@@ -46,7 +47,7 @@ function bots.do_act_bot(properties, dtime)
 									bots.bots_data[name].usrdata:set_animation(bots.bots_animations[name].mine, bots.bots_animations[name].anispeed, 0)
 									local itemstack = ItemStack((bots.bots_data[name].actual_rifle ~= "" and bots.bots_data[name].actual_rifle) or (bots.bots_data[name].actual_pistol ~= "" and bots.bots_data[name].actual_pistol))
 									if itemstack and itemstack ~= "" then
-										bots.bots_data[name].actual_item = itemstack:get_name()
+										bots.actual_items[name] = itemstack:get_name()
 										local damage = itemstack:get_definition().RW_gun_capabilities.gun_damage -- can be changed.
 										local sound = itemstack:get_definition().RW_gun_capabilities.gun_sound
 										local velocity = itemstack:get_definition().RW_gun_capabilities.gun_velocity or bots.default_gun_velocity
