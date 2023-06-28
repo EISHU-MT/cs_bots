@@ -5,14 +5,16 @@ return function(self, d)
 	local nearest_player = Player(nearest_id)
 	local pos = self.object:get_pos()
 	local priority = mobkit.get_queue_priority(self)
-	if nearest_player and vector.distance(nearest_player:get_pos(), pos) <= 5 then
-		if bots.find_path_to(self.object:get_pos(), pos) then
-			if self:get_team() ~= csgo.check_team(Name(nearest_player)) then
-				mobkit.hq_attack(self, mobkit.get_queue_priority(self), nearest_id)
-				mobkit.lq_turn2pos(self, nearest_player:get_pos())
-				return
-			end
-		end
+	if nearest_id then
+		--if bots.find_path_to(self.object:get_pos(), pos) then
+			--if self:get_team() ~= csgo.check_team(Name(nearest_player)) then
+				--mobkit.hq_attack(self, mobkit.get_queue_priority(self), nearest_id)
+				
+				print(mobkit.hq_hunt(self, mobkit.get_queue_priority(self), nearest_id))
+				--mobkit.lq_turn2pos(self, nearest_player:get_pos())
+				--return
+			--end
+		--end
 	end
 	
 	if nearest_player and self.hp <= 10 and self:get_team() ~= csgo.check_team(Name(nearest_player)) then
