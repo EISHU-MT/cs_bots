@@ -66,6 +66,25 @@ function bots.do_act_bot(properties, dtime)
 					end
 				end
 			end
+			
+		end
+		if c4.planted then
+			if properties:get_team() ~= "terrorist" and properties:get_team() ~= "" and properties:get_team() == "counter" then
+				if c4.pos and vector.distance(c4.pos, object:get_pos()) <= 3 then
+					--error()
+					--print(dtime)
+					bots.timers[entity:get_bot_name()] = bots.timers[entity:get_bot_name()] + dtime
+					object:set_velocity(vector.new(0,0,0))
+					if bots.timers[entity:get_bot_name()] >= 7 then
+						local user = "BOT "..entity:get_bot_name(true)
+						annouce.winner("counter", "Congrats to "..user.." for defusing the c4!")
+						core.after(0.6, cs_match.finish_match, "counter")
+						c4.remove_bomb()
+						c4.remove_bomb2()
+						bots.timers[entity:get_bot_name()] = 0
+					end
+				end
+			end
 		end
 		-- Move forms
 		--[[
@@ -84,7 +103,7 @@ local step = function(dtime)
 	bots.timer = bots.timer + dtime
 	if bots.timer >= 0.1 then
 		for name, val in pairs(bots.queue_shot) do
-			print(val)
+			--print(val)
 			
 			if type(val) == "number" and not (val <= 0) then
 				bots.queue_shot[name] = bots.queue_shot[name] - dtime
