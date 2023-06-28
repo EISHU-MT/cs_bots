@@ -44,18 +44,42 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					else
 						--if died[victim] ~= true then 
 							if cs_match.commenced_match ~= false then
-								local a1 = hitter:get_inventory() and hitter:get_wielded_item() and hitter:get_wielded_item() ~= "" and hitter:get_wielded_item() or ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_item)
-								local image = a1:get_definition().inventory_image or "cs_files_hand.png"
-								
-								local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
-								
-								cs_kh.add(hitter_name, "BOT "..bot:get_luaentity().bot_name, image, "", csgo.pot[victim])
-								
-								cs_kill.run_callbacks(victim, pname, nil, csgo.pot[victim])
-								
-								bots.register_deadbot(bot, csgo.pot[victim])
-								
-								csgo.blank(victim, csgo.pot[victim])
+								if hitter:get_player_name() and hitter:get_player_name() ~= "" then
+									local a1 = hitter:get_inventory() and hitter:get_wielded_item() and hitter:get_wielded_item() ~= "" and hitter:get_wielded_item() or ItemStack(bots.actual_items[pname])
+									local image = a1:get_definition().inventory_image or "cs_files_hand.png"
+									
+									local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
+									
+									cs_kh.add(pname, "BOT "..self.bot_name, image, "", csgo.pot[victim])
+									
+									cs_kill.run_callbacks(victim, pname, nil, csgo.pot[victim])
+									
+									bots.register_deadbot(bot, csgo.pot[victim])
+									
+									csgo.blank(victim, csgo.pot[victim])
+								else
+									print(dump(bots.bots_data[pname]))
+									local a1 = ItemStack(bots.actual_items[pname])
+									local image = a1:get_definition().inventory_image or "cs_files_hand.png"
+									
+									local err = image == nil
+									
+									local exc = ""
+									
+									if err then
+										exc = "(!)"
+									end
+									
+									local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
+									
+									cs_kh.add(pname, "BOT "..self.bot_name, image, exc, csgo.pot[victim])
+									
+									cs_kill.run_callbacks(victim, pname, nil, csgo.pot[victim])
+									
+									bots.register_deadbot(bot, csgo.pot[victim])
+									
+									csgo.blank(victim, csgo.pot[victim])
+								end
 							end
 						--end
 					end
@@ -76,18 +100,33 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					else
 						--if died[victim] ~= true then 
 							if cs_match.commenced_match ~= false then
-								local a1 = hitter:get_inventory() and hitter:get_wielded_item() and hitter:get_wielded_item() ~= "" and hitter:get_wielded_item() or ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_item)
-								local image = a1:get_definition().inventory_image or "cs_files_hand.png"
-								
-								local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
-								
-								cs_kh.add(hitter_name, "BOT "..bot:get_luaentity().bot_name, image, "", csgo.pot[victim])
-								
-								cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
-								
-								bots.register_deadbot(bot, csgo.pot[victim])
-								
-								csgo.blank(victim, csgo.pot[victim])
+								if hitter:get_player_name() and hitter:get_player_name() ~= "" then
+									local a1 = hitter:get_inventory() and hitter:get_wielded_item() and hitter:get_wielded_item() ~= "" and hitter:get_wielded_item() or ItemStack(bots.actual_items[pname])
+									local image = a1:get_definition().inventory_image or "cs_files_hand.png"
+									
+									local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
+									
+									cs_kh.add(pname, "BOT "..self.bot_name, image, "", csgo.pot[victim])
+									
+									cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
+									
+									bots.register_deadbot(bot, csgo.pot[victim])
+									
+									csgo.blank(victim, csgo.pot[victim])
+								else
+									local a1 = ItemStack(bots.actual_items[pname])
+									local image = a1:get_definition().inventory_image or "cs_files_hand.png"
+									
+									local hitter_name = hitter:get_player_name() ~= "" and hitter:get_player_name() or hitter:get_luaentity() and hitter:get_luaentity().bot_name and "BOT "..hitter:get_luaentity().bot_name
+									
+									cs_kh.add(pname, "BOT "..self.bot_name, image, "", csgo.pot[victim])
+									
+									cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
+									
+									bots.register_deadbot(bot, csgo.pot[victim])
+									
+									csgo.blank(victim, csgo.pot[victim])
+								end
 							end
 						--end
 					end
@@ -173,7 +212,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				else
 					if died[victim] ~= true then 
 						if cs_match.commenced_match ~= false then
-							local a1 = ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_item)
+							local a1 = ItemStack(bots.actual_items[victim])
 							local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 							cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 							
@@ -208,7 +247,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				else
 					if died[victim] ~= true then 
 						if cs_match.commenced_match ~= false and bot:get_luaentity() and bots.bots_data[bot:get_luaentity():get_bot_name()] then
-							local a1 = ItemStack(bots.bots_data[bot:get_luaentity():get_bot_name()].actual_item)
+							local a1 = ItemStack(bots.actual_items[victim])
 							local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 							cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 							
