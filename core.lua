@@ -145,6 +145,8 @@ bots = {
 		died_players[bot2:get_bot_name()]:set_properties(new_table)
 		died_players[bot2:get_bot_name()]:set_animation({x = 162, y = 166}, 15, 0)
 		
+		bots_nametags.rmv_to(bot2:get_bot_name())
+		
 		local team = bot2:get_team()
 		csgo.op[bot2:get_bot_name()] = false
 		csgo.pt[bot2:get_bot_name()] = false
@@ -186,6 +188,7 @@ bots = {
 		for name, tabled in pairs(bots.bots_data) do
 			if name and tabled and not name:find("__") then
 				if type(tabled.usrdata) == "userdata" then
+					bots_nametags.rmv_to(tabled.usrdata:get_luaentity():get_bot_name())
 					tabled.usrdata:remove()
 				end
 				
@@ -195,6 +198,8 @@ bots = {
 				
 				bott:set_pos(maps.current_map.teams[tabled.team])
 				bott:set_hp(20)
+				
+				bots_nametags.add_to(bott:get_luaentity())
 				
 				local def = bott:get_properties()
 				def.is_visible = true
@@ -324,6 +329,7 @@ bots = {
 	end,
 	witem = {},
 	data_of_bots = {},
+	timers = {},
 	logic = dofile(core.get_modpath(core.get_current_modname()).."/logic_proccesor.lua")
 }
 
@@ -451,6 +457,7 @@ function bots.register_bot(name, def, animation)
 		end,
 		on_death = function(self, puncher)
 			--if self.object:get_hp() - damage <= tonumber("0") then -- I feel dumb by setting the tonumber() and not directly 0, because it does errors, like this: attempt to compare number with boolean.
+				bots.timers[self:get_bot_name()] = 0
 				local player = Player(puncher)
 				local name = Name(puncher)
 				local player_team = csgo.check_team(name)
@@ -556,6 +563,7 @@ function bots.register_bot(name, def, animation)
 	}
 	bots.data_of_bots["BOT_"..def.bot_name] = {timer = 0}
 	kills.add_to("BOT_"..def.bot_name, team)
+	bots.timers["BOT_"..def.bot_name] = 0
 end
 
 local wield_entity = {
@@ -565,9 +573,10 @@ local wield_entity = {
 		visual = "wielditem",
 		textures = {"wield3d:hand"},
 		wielder = nil,
+		pointable = false,
 		timer = 0,
 		static_save = false,
-	}
+	},
 }
 
 --Register some parts for env
