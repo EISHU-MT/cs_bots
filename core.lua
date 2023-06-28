@@ -188,7 +188,7 @@ bots = {
 		for name, tabled in pairs(bots.bots_data) do
 			if name and tabled and not name:find("__") then
 				if type(tabled.usrdata) == "userdata" then
-					bots_nametags.rmv_to(tabled.usrdata:get_luaentity():get_bot_name())
+					bots_nametags.rmv_to(name)
 					tabled.usrdata:remove()
 				end
 				
