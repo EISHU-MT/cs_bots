@@ -1,15 +1,23 @@
-function bots.get_good_arm_by_money(arms, money2)
+function bots.get_good_arm_by_money(arms, money2, name)
 	local money = tonumber(money2)
 	local i = 0
-	for _, arm in pairs(arms) do
+	--[[for _, arm in pairs(arms) do
 		i = i + 1
 		if ItemStack(arm) then
 			--print(money, type(money))
-			if cs_shop.arms_values[arm] and money >= cs_shop.arms_values[arm] then
+			if cs_shop.arms_values[arm] and money >= cs_shop.arms_values[arm] and (cs_shop.arms_values[actual] or 0) < cs_shop.arms_values[arm] then
 				return arm
 			else
 				return arm
 			end
+		end
+	end--]]
+	local a = arms
+	table.sort(a, function (n1, n2) return cs_shop.arms_values[n1] < cs_shop.arms_values[n2] end)
+	for _, arm in pairs(a) do
+		--print(arm, cs_shop.arms_values[arm], name)
+		if cs_shop.arms_values[arm] <= money and not (cs_shop.arms_values[arm] > money) then
+			return arm
 		end
 	end
 end
