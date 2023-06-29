@@ -89,17 +89,7 @@ bots = {
 			bots.groups[team].bots[bot2:get_bot_name()] = true
 			bots.groups[team].count = #bots.groups[team].bots
 			
-			--WieldItem (Extracted from wielditem (cs_hand))
-			--print()
-			--print(dump(core.add_entity(bot:get_pos(), "bots:witem")))
-			local witem = core.add_entity(bot:get_pos(), "bots:witem")
-			witem:set_attach(bot, bots.location[1], bots.location[2], bots.location[3])
-			witem:set_properties({
-				textures = {"wield3d:hand"},
-				visual_size = bots.location[4],
-			})
 			
-			bots.witem[bot2:get_bot_name()] = witem
 			
 			if by_started_engine ~= true then
 				if team == "counter" then
@@ -188,16 +178,39 @@ bots = {
 		for name, tabled in pairs(bots.bots_data) do
 			if name and tabled and not name:find("__") then
 				if type(tabled.usrdata) == "userdata" then
+					if type(bots.witem[name]) == "userdata" then
+						bots.witem[name]:remove()
+					end
 					bots_nametags.rmv_to(name)
 					tabled.usrdata:remove()
 				end
 				
 				-- Reset bot
 				
-				local bott = core.add_entity(maps.current_map.teams[tabled.team], tabled.rname)
+				local bott = core.add_entity(bots.random_pos_from(maps.current_map.teams[tabled.team]), tabled.rname)
 				
 				bott:set_pos(maps.current_map.teams[tabled.team])
 				bott:set_hp(20)
+				
+				if type(bots.witem[name]) == "userdata" then
+					bots.witem[name]:remove()
+					local witem = core.add_entity(bott:get_pos(), "bots:witem")
+					
+					witem:set_attach(bott, bots.location[1], bots.location[2], bots.location[3])
+					witem:set_properties({
+						textures = {"wield3d:hand"},
+						visual_size = bots.location[4],
+					})
+					bots.witem[name] = witem
+				else
+					local witem = core.add_entity(bott:get_pos(), "bots:witem")
+					witem:set_attach(bott, bots.location[1], bots.location[2], bots.location[3])
+					witem:set_properties({
+						textures = {"wield3d:hand"},
+						visual_size = bots.location[4],
+					})
+					bots.witem[name] = witem
+				end
 				
 				bots_nametags.add_to(bott:get_luaentity())
 				
