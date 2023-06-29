@@ -147,7 +147,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				local new_table = table.copy(bots.dead_ent)
 				local tex
 				if csgo.pot2[Name(player)] == "terrorist" then
-					tex = "red.png"
+					tex = player:get_properties().textures
 				elseif csgo.pot2[Name(player)] == "counter" then
 					tex = "blue.png"
 				else
@@ -170,6 +170,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				end
 			else
 				return -- Avoid some bugs
+		--print()
 			end
 			
 			local pname
@@ -190,7 +191,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 			if not victim or not pname then
 				return
 			end
-			
+			--error()
 			if csgo.pot[victim] == csgo.pot[pname] then -- They suicide and win, this is not ok >:(
 				if csgo.team[csgo.pot[victim]].total_count - 1 <= 0 and csgo.team[csgo.enemy_team(csgo.pot[victim])].total_count == 1 then
 					local t = csgo.enemy_team(csgo.pot[victim])
@@ -232,13 +233,14 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				end
 				return
 			else
-				if csgo.team[csgo.pot[victim]].total_count - 1 == 0 and csgo.team[csgo.pot[pname]].total_count == 1 then
+				--error(csgo.team[csgo.pot[victim]].total_count )
+				if csgo.team[csgo.pot[victim]].total_count - 1 <= 0 and csgo.team[csgo.pot[pname]].total_count == 1 then
 					local random = Randomise("Select random", {"The last alive player is: "..pname, "the team "..csgo.pot[pname].." had only 1 player!", "wajaaaa"})
 					annouce.winner(csgo.pot[pname], random)
 					cs_match.finish_match(csgo.pot[pname])
 					cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
 					--bots.respawn_bots()
-				elseif csgo.team[csgo.pot[victim]].total_count - 1 == 0 and victim and csgo.pot[pname] then
+				elseif csgo.team[csgo.pot[victim]].total_count - 1 <= 0 and victim and csgo.pot[pname] then
 					local random = Randomise("Select random", {"The last killed player is: "..victim, "the team "..csgo.pot[pname].." did his job", "wajaaa"})
 					annouce.winner(csgo.pot[pname], random)
 					cs_match.finish_match(csgo.pot[pname])
@@ -246,8 +248,8 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 					--bots.respawn_bots()
 				else
 					if died[victim] ~= true then 
-						if cs_match.commenced_match ~= false and bot:get_luaentity() and bots.bots_data[bot:get_luaentity():get_bot_name()] then
-							local a1 = ItemStack(bots.actual_items[victim])
+						if cs_match.commenced_match ~= false then
+							local a1 = ItemStack(bots.actual_items[pname])
 							local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 							cs_kh.add(pname, victim, image, "", csgo.pot[victim])
 							
@@ -255,7 +257,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 							
 							bank.player_add_value(pname, 60)
 							
-							ccore[victim] = csgo.pot2[victim]
+							ccore[victim] = csgo.pot[victim]
 							
 							csgo.blank(victim, csgo.pot[victim])
 							csgo.spectator(victim)
