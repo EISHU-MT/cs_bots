@@ -117,7 +117,13 @@ bots.random_path = function(minedge, maxedge_raw)
 	return vector.new(X, Y, Z)
 end
 
-
+bots.random_pos_from = function(pos)
+	local me, mxe = bots.radius_to_area(pos, 3)
+	local X = r(me.x, mxe.x)
+	local Y = pos.y -- Dont randomize the `Y` Axis
+	local Z = r(me.z, mxe.z)
+	return vector.new(X, Y, Z)
+end
 
 
 
