@@ -10,7 +10,7 @@ return function(self, d)
 			--if self:get_team() ~= csgo.check_team(Name(nearest_player)) then
 				--mobkit.hq_attack(self, mobkit.get_queue_priority(self), nearest_id)
 				
-				print(mobkit.hq_hunt(self, mobkit.get_queue_priority(self), nearest_id))
+				mobkit.hq_hunt(self, mobkit.get_queue_priority(self), nearest_id)
 				--mobkit.lq_turn2pos(self, nearest_player:get_pos())
 				--return
 			--end
