@@ -16,7 +16,7 @@ function bots.get_good_arm_by_money(arms, money2, name)
 	table.sort(a, function (n1, n2) return cs_shop.arms_values[n1] < cs_shop.arms_values[n2] end)
 	for _, arm in pairs(a) do
 		--print(arm, cs_shop.arms_values[arm], name)
-		if cs_shop.arms_values[arm] <= money and not (cs_shop.arms_values[arm] > money) then
+		if cs_shop.arms_values[arm] <= money and ((a[_ + 1] and cs_shop.arms_values[a[_ + 1]]) and (cs_shop.arms_values[a[_ + 1]] > money)) then
 			return arm
 		end
 	end

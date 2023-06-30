@@ -45,7 +45,7 @@ function raw_metatable:destroy() -- Destroy the ref
 end
 
 function bots.request_inv(botd)
-	local bot_meta = {__index = raw_metatable, __newindex = function() end}
+	local bot_meta = {__index = raw_metatable}
 	local bot = botd
 	return setmetatable(bot, bot_meta)
 end
