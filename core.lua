@@ -454,8 +454,17 @@ function bots.register_bot(name, def, animation)
 				return -- Engine must dont make obj rotate, like an spectator rightclicking a bot
 			end
 			if csgo.check_team(name) == csgo.check_team(entity:get_bot_name()) then
+				local from = bots.to_2d(self.object:get_pos())
+				local to = bots.to_2d(player:get_pos())
+				local offset_to = {
+					x = to.x - from.x,
+					y = to.y - from.y
+				}
+				
+				local dir = math.atan2(offset_to.y, offset_to.x) - (math.pi/2)
+				self.object:set_yaw(dir)
 				local msg = radio.select_random_msg("what_happening")
-				radio.send_msg(self.team, msg, "BOT "..entity:get_bot_name(true).." ")
+				radio.send_msg(self.team, msg, "<BOT "..entity:get_bot_name(true).."> ")
 			else
 				local from = bots.to_2d(self.object:get_pos())
 				local to = bots.to_2d(player:get_pos())
@@ -470,18 +479,27 @@ function bots.register_bot(name, def, animation)
 		end,
 		on_death = function(self, puncher)
 			--if self.object:get_hp() - damage <= tonumber("0") then -- I feel dumb by setting the tonumber() and not directly 0, because it does errors, like this: attempt to compare number with boolean.
-				bots.timers[self:get_bot_name()] = 0
-				local player = Player(puncher)
-				local name = Name(puncher)
-				local player_team = csgo.check_team(name)
-				local team = self.team
-				if player_team ~= "spectator" then
-					
-					
-					
-					local lay = bots.on_kill(self.object, player, damage, self, "bot")
-					
+				--bots.timers[self:get_bot_name()] = 0
+				
+				local object_name = ""
+				
+				if puncher:is_player() then
+					object_name = puncher:get_player_name()
+				elseif puncher:get_properties().infotext:find("BOT") then
+					object_name = puncher:get_luaentity():get_bot_name()
 				end
+				
+				local entity_team = csgo.check_team(object_name)
+				local team = self.team
+				local enemy_team = csgo.enemy_team(team)
+				
+				if entity_team == enemy_team then
+					bank.player_add_value(self:get_bot_name(), 60)
+				else
+					bank.rm_player_value(self:get_bot_name(), 50)
+				end
+				
+				bots.on_kill(self.object, puncher, damage, self, "bot")
 				
 				--core.log("error", "---")
 				
@@ -504,7 +522,15 @@ function bots.register_bot(name, def, animation)
 			local dir = math.atan2(offset_to.y, offset_to.x) - (math.pi/2)
 			self.object:set_yaw(dir)
 			
-			local pteam = csgo.check_team(puncher:get_player_name())
+			local object_name = ""
+			
+			if puncher:is_player() then
+				object_name = puncher:get_player_name()
+			elseif puncher:get_properties().infotext:find("BOT") then
+				object_name = puncher:get_luaentity():get_bot_name()
+			end
+			
+			local pteam = csgo.check_team(object_name)
 			local name = puncher:get_player_name()
 			
 			if pteam ~= self.object:get_luaentity():get_team() then
@@ -516,7 +542,7 @@ function bots.register_bot(name, def, animation)
 				
 			end
 			
-			if not minetest.settings:get_bool("cs_core.enable_friend_shot", false) then
+			if (not minetest.settings:get_bool("cs_core.enable_friend_shot", false)) and pteam ~= "spectator" then
 				mobkit.hurt(self, damage)
 			end
 			
@@ -548,12 +574,18 @@ function bots.register_bot(name, def, animation)
 		armor_groups = {fleshy = 100, immortal = 0}
 	}
 	core.register_entity(name, setmetatable(mdef, metatable))
+	local default_pistol = "rangedweapons:glock17"
+	if team == "terrorist" then
+		default_pistol = "rangedweapons:glock17"
+	else
+		default_pistol = "rangedweapons:m1991"
+	end
 	bots.bots_data["BOT_"..def.bot_name] = {
 		name = "BOT_"..def.bot_name,
 		money = 200,
 		actual_rifle = "",
 		team = team,
-		actual_pistol = "",
+		actual_pistol = default_pistol,
 		recharge = true,
 		usrdata = {},
 		rname = name,
