@@ -45,9 +45,20 @@ function bots.do_act_bot(properties, dtime)
 								
 								if not bots.queue_shot[name] then
 									bots.bots_data[name].usrdata:set_animation(bots.bots_animations[name].mine, bots.bots_animations[name].anispeed, 0)
-									local itemstack = ItemStack((bots.bots_data[name].actual_rifle ~= "" and bots.bots_data[name].actual_rifle) or (bots.bots_data[name].actual_pistol ~= "" and bots.bots_data[name].actual_pistol))
+									local to_use = ""
+									if bots.bots_data[name].actual_rifle ~= "" then
+										to_use = bots.bots_data[name].actual_rifle
+									elseif bots.bots_data[name].actual_pistol ~= "" then
+										to_use = bots.bots_data[name].actual_pistol
+									end
+										
+									local itemstack = ItemStack(to_use)
 									if itemstack and itemstack ~= "" then
+										if itemstack:get_name() == "" then
+											return
+										end
 										bots.actual_items[name] = itemstack:get_name()
+										
 										local damage = itemstack:get_definition().RW_gun_capabilities.gun_damage -- can be changed.
 										local sound = itemstack:get_definition().RW_gun_capabilities.gun_sound
 										local velocity = itemstack:get_definition().RW_gun_capabilities.gun_velocity or bots.default_gun_velocity
@@ -59,7 +70,7 @@ function bots.do_act_bot(properties, dtime)
 										})
 										
 									else
-										print()
+										--print()
 									end
 								end
 							end
