@@ -6,11 +6,15 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 				
 				if hitter and not hitter:get_properties().infotext:find("BOT") then -- for now
 					pname = hitter:get_player_name()
+					--error(1)
 				elseif hitter and hitter:get_properties().infotext:find("BOT") then
 					pname = hitter:get_luaentity():get_bot_name()
+					--error(2)
 				end
 				
 				local victim = "BOT_"..self.bot_name
+				
+				
 				
 				if victim and pname and victim == pname then
 					return
@@ -58,7 +62,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 									
 									csgo.blank(victim, csgo.pot[victim])
 								else
-									print(dump(bots.bots_data[pname]))
+									--print(dump(bots.bots_data[pname]))
 									local a1 = ItemStack(bots.actual_items[pname])
 									local image = a1:get_definition().inventory_image or "cs_files_hand.png"
 									
@@ -222,7 +226,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 							ccore[victim] = csgo.pot2[victim]
 							--bots.register_deadbot(bot, csgo.pot[victim])
 							
-							bank.player_add_value(pname, 60)
+							--bank.player_add_value(pname, 60)
 							
 							csgo.blank(victim, csgo.pot[victim])
 							
@@ -255,7 +259,7 @@ bots.on_kill = function(bot, hitter, damage, self, state) -- bot == bot have bee
 							
 							cs_kill.run_callbacks(victim, pname, csgo.pot[pname], csgo.pot[victim])
 							
-							bank.player_add_value(pname, 60)
+							--bank.player_add_value(pname, 60)
 							
 							ccore[victim] = csgo.pot[victim]
 							
